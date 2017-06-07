@@ -1,0 +1,263 @@
+<project xmlns="http://maven.apache.org/POM/4.0.0" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+         xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/maven-v4_0_0.xsd">
+    <modelVersion>4.0.0</modelVersion>
+    <groupId>com.example</groupId>
+    <artifactId>scalajs</artifactId>
+    <version>1.0-SNAPSHOT</version>
+    <name>${project.artifactId}</name>
+
+    <properties>
+        <maven.compiler.source>1.8</maven.compiler.source>
+        <maven.compiler.target>1.8</maven.compiler.target>
+        <encoding>UTF-8</encoding>
+        <scala.version>2.11.2</scala.version>
+        <scala.minor.version>2.11</scala.minor.version>
+        <scalajs.version>0.6.17</scalajs.version>
+        <!-- -->
+        <sjs.lib>lib.js</sjs.lib>
+        <sjs.run>run.js</sjs.run>
+        <!-- -->
+        <sjs.phase>prepare-package</sjs.phase>
+        <sjs.target>${project.build.directory}/scala-js</sjs.target>
+        <!-- -->
+        <sjs.main.classes>${project.build.directory}/classes</sjs.main.classes>
+        <sjs.test.classes>${project.build.directory}/test-classes</sjs.test.classes>
+        <!-- -->
+        <sjs.arg.options>--debug --fastOpt --sourceMap</sjs.arg.options>
+        <sjs.arg.runtime>--output ${sjs.target}/${sjs.run}</sjs.arg.runtime>
+        <sjs.arg.classpath><![CDATA[${sjs.main.classes} ${sjs.test.classes} ${sjs.dependency}]]></sjs.arg.classpath>
+        <!-- -->
+        <sjs.arguments><![CDATA[${sjs.arg.options} ${sjs.arg.library} ${sjs.arg.runtime} ${sjs.arg.classpath}]]></sjs.arguments>
+        <!-- Scala/JS compiler plugin identification. -->
+        <sjs.plugin.groupId>org.scala-js</sjs.plugin.groupId>
+        <sjs.plugin.artifactId>scalajs-compiler_${scala.version}</sjs.plugin.artifactId>
+        <sjs.plugin.version>${scalajs.version}</sjs.plugin.version>
+        <!-- Scala/JS compiler plugin IDE integration. -->
+        <sjs.plugin.name>scalajs</sjs.plugin.name>
+        <sjs.plugin.directory>${project.build.directory}/scala-plugin</sjs.plugin.directory>
+        <sjs.eclipse.project>${basedir}/.project</sjs.eclipse.project>
+        <sjs.eclipse.settings>${basedir}/.settings</sjs.eclipse.settings>
+        <sjs.eclipse.properties>${sjs.eclipse.settings}/org.scala-ide.sdt.core.prefs</sjs.eclipse.properties>
+    </properties>
+    <!-- Scala/JS libraries use scope=provided. -->
+    <dependencies>
+        <dependency>
+            <groupId>org.scala-js</groupId>
+            <artifactId>scalajs-library_${scala.minor.version}</artifactId>
+            <version>${scalajs.version}</version>
+            <scope>provided</scope>
+        </dependency>
+    </dependencies>
+    <build>
+        <plugins>
+
+            <!-- Provision Scala/JS compiler plugin for IDE. -->
+            <plugin>
+                <groupId>org.apache.maven.plugins</groupId>
+                <artifactId>maven-dependency-plugin</artifactId>
+                <executions>
+                    <execution>
+                        <id>plugin-copy</id>
+                        <phase>initialize</phase>
+                        <goals>
+                            <goal>copy</goal>
+                        </goals>
+                        <configuration>
+                            <artifactItems>
+                                <artifactItem>
+                                    <groupId>${sjs.plugin.groupId}</groupId>
+                                    <artifactId>${sjs.plugin.artifactId}</artifactId>
+                                    <version>${sjs.plugin.version}</version>
+                                    <outputDirectory>${sjs.plugin.directory}</outputDirectory>
+                                    <overWrite>false</overWrite>
+                                </artifactItem>
+                            </artifactItems>
+                        </configuration>
+                    </execution>
+                    <execution>
+                        <id>build-path</id>
+                        <phase>${sjs.phase}</phase>
+                        <goals>
+                            <goal>build-classpath</goal>
+                        </goals>
+                        <configuration>
+                            <includeScope>provided</includeScope>
+                            <outputProperty>sjs.dependency</outputProperty>
+                        </configuration>
+                    </execution>
+                </executions>
+            </plugin>
+
+            <!--&lt;!&ndash; Configure Scala/JS compiler plugin in IDE. &ndash;&gt;-->
+            <!--<plugin>-->
+                <!--<groupId>org.apache.maven.plugins</groupId>-->
+                <!--<artifactId>maven-antrun-plugin</artifactId>-->
+                <!--<executions>-->
+                    <!--<execution>-->
+                        <!--<id>configure-ide</id>-->
+                        <!--<phase>initialize</phase>-->
+                        <!--<goals>-->
+                            <!--<goal>run</goal>-->
+                        <!--</goals>-->
+                        <!--<configuration>-->
+                            <!--<target>-->
+                                <!--<propertyfile file="${sjs.eclipse.properties}"-->
+                                              <!--comment="Maven Config: scala-js-lib">-->
+                                    <!--<entry key="eclipse.preferences.version" value="1" />-->
+                                    <!--<entry key="scala.compiler.useProjectSettings" value="true" />-->
+                                    <!--<entry key="Xpluginsdir" value="${sjs.plugin.directory}" />-->
+                                    <!--<entry key="Xplugin" value="" />-->
+                                    <!--<entry key="Xplugin-disable" value="" />-->
+                                    <!--<entry key="Xplugin-require" value="${sjs.plugin.name}" />-->
+                                <!--</propertyfile>-->
+                            <!--</target>-->
+                        <!--</configuration>-->
+                    <!--</execution>-->
+                <!--</executions>-->
+            <!--</plugin>-->
+
+            <!-- Compile none of Java. -->
+            <plugin>
+                <groupId>org.apache.maven.plugins</groupId>
+                <artifactId>maven-compiler-plugin</artifactId>
+                <configuration>
+                    <skipMain>true</skipMain>
+                    <skip>true</skip>
+                </configuration>
+            </plugin>
+
+            <!-- Compile Scala into JS. -->
+            <plugin>
+                <groupId>net.alchim31.maven</groupId>
+                <artifactId>scala-maven-plugin</artifactId>
+                <configuration>
+                    <compileOrder>JavaThenScala</compileOrder>
+                    <scalaVersion>${scala.version}</scalaVersion>
+                    <scalaCompatVersion>${scala.minor.version}</scalaCompatVersion>
+                    <useZincServer>true</useZincServer>
+                    <recompileMode>incremental</recompileMode>
+                    <addZincArgs>-no-color|-fork-java</addZincArgs>
+                    <addScalacArgs>-deprecation|-feature|</addScalacArgs>
+                    <jvmArgs>
+                        <jvmArg>-client</jvmArg>
+                        <jvmArg>-Xms500m</jvmArg>
+                        <jvmArg>-Xmx500m</jvmArg>
+                        <jvmArg>-Xss1m</jvmArg>
+                    </jvmArgs>
+                    <compilerPlugins>
+                        <compilerPlugin>
+                            <groupId>${sjs.plugin.groupId}</groupId>
+                            <artifactId>${sjs.plugin.artifactId}</artifactId>
+                            <version>${sjs.plugin.version}</version>
+                        </compilerPlugin>
+                    </compilerPlugins>
+                </configuration>
+                <executions>
+                    <execution>
+                        <goals>
+                            <goal>add-source</goal>
+                            <goal>compile</goal>
+                            <goal>testCompile</goal>
+                        </goals>
+                    </execution>
+                </executions>
+            </plugin>
+
+            <!-- Process dependency class path. -->
+            <plugin>
+                <groupId>org.codehaus.mojo</groupId>
+                <artifactId>build-helper-maven-plugin</artifactId>
+                <executions>
+                    <execution>
+                        <id>filter-path</id>
+                        <phase>${sjs.phase}</phase>
+                        <goals>
+                            <goal>regex-property</goal>
+                        </goals>
+                        <configuration>
+                            <name>sjs.dependency</name>
+                            <value>${sjs.dependency}</value>
+                            <regex>${path.separator}</regex>
+                            <replacement xml:space="preserve"><![CDATA[ ]]></replacement>
+                        </configuration>
+                    </execution>
+                </executions>
+            </plugin>
+
+            <!-- Provide Scala/JS build folder. -->
+            <plugin>
+                <groupId>org.apache.maven.plugins</groupId>
+                <artifactId>maven-antrun-plugin</artifactId>
+                <executions>
+                    <execution>
+                        <id>make-dir</id>
+                        <phase>${sjs.phase}</phase>
+                        <goals>
+                            <goal>run</goal>
+                        </goals>
+                        <configuration>
+                            <target>
+                                <mkdir dir="${sjs.target}" />
+                            </target>
+                        </configuration>
+                    </execution>
+                </executions>
+            </plugin>
+
+            <!-- Generate Scala/JS runtime and library scripts. -->
+            <plugin>
+                <groupId>org.codehaus.mojo</groupId>
+                <artifactId>exec-maven-plugin</artifactId>
+                <dependencies>
+                    <dependency>
+                        <groupId>org.scala-js</groupId>
+                        <artifactId>scalajs-cli_${scala.minor.version}</artifactId>
+                        <version>${scalajs.version}</version>
+                    </dependency>
+                </dependencies>
+                <executions>
+                    <execution>
+                        <id>make-js</id>
+                        <phase>${sjs.phase}</phase>
+                        <goals>
+                            <goal>java</goal>
+                        </goals>
+                    </execution>
+                </executions>
+                <configuration>
+                    <cleanupDaemonThreads>true</cleanupDaemonThreads>
+                    <daemonThreadJoinTimeout>100</daemonThreadJoinTimeout>
+                    <includePluginDependencies>true</includePluginDependencies>
+                    <includeProjectDependencies>false</includeProjectDependencies>
+                    <mainClass>org.scalajs.cli.Scalajsld</mainClass>
+                    <commandlineArgs>${sjs.arguments}</commandlineArgs>
+                </configuration>
+            </plugin>
+
+            <!-- Copy generated resources. -->
+            <plugin>
+                <groupId>org.apache.maven.plugins</groupId>
+                <artifactId>maven-resources-plugin</artifactId>
+                <executions>
+                    <execution>
+                        <id>copy-js</id>
+                        <phase>${sjs.phase}</phase>
+                        <goals>
+                            <goal>copy-resources</goal>
+                        </goals>
+                        <configuration>
+                            <outputDirectory>${sjs.main.classes}</outputDirectory>
+                            <resources>
+                                <resource>
+                                    <directory>${sjs.target}</directory>
+                                    <filtering>false</filtering>
+                                </resource>
+                            </resources>
+                        </configuration>
+                    </execution>
+                </executions>
+            </plugin>
+
+        </plugins>
+    </build>
+</project>
